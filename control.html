@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Control Trivia 📱</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Segoe UI,Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#1e1f22;color:#fff;min-height:100vh;padding:14px;max-width:520px;margin:0 auto}
+h1{font-size:20px;text-align:center;margin-bottom:4px}
+#st{text-align:center;font-size:13px;color:#949ba4;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
+button{border:none;border-radius:12px;padding:18px 8px;font-size:18px;font-weight:800;color:#fff;background:#35373c;cursor:pointer;touch-action:manipulation}
+button:active{filter:brightness(1.4)}
+.a{background:#5865f2}.b{background:#57a25c}.c{background:#c98a2b}.d{background:#c84a4a}
+.big{background:#5865f2;grid-column:span 2;padding:22px}
+.go{background:#3ba55d;grid-column:span 2;padding:22px}
+.gold{background:#7a5c1e}
+.red{background:#7d2d2e;grid-column:span 2}
+.sec{margin:14px 0 8px;color:#b5bac1;font-size:13px;font-weight:700;text-transform:uppercase}
+</style>
+</head>
+<body>
+<h1>🎮 Control Trivia</h1>
+<div id="st">conectando…</div>
+<div class="sec">Respuestas</div>
+<div class="grid4">
+<button class="a" onclick="cmd('marcar',0)">A</button>
+<button class="b" onclick="cmd('marcar',1)">B</button>
+<button class="c" onclick="cmd('marcar',2)">C</button>
+<button class="d" onclick="cmd('marcar',3)">D</button>
+</div>
+<div class="grid">
+<button class="big" onclick="cmd('revelar')">🔎 Revelar</button>
+<button class="go" onclick="cmd('siguiente')">Siguiente →</button>
+<button onclick="cmd('anterior')">← Anterior</button>
+<button onclick="cmd('audio')">▶ Audio / G</button>
+</div>
+<div class="sec">Comodines</div>
+<div class="grid">
+<button class="gold" onclick="cmd('c50')">✂ 50%</button>
+<button class="gold" onclick="cmd('pista')">💡 Pista</button>
+<button class="gold" onclick="cmd('llamada')">📞 Llamada</button>
+<button class="gold" onclick="cmd('cambio')">🔀 Cambio</button>
+</div>
+<div class="sec">Puntos (premia al que acertó)</div>
+<div class="grid4">
+<button class="b" onclick="cmd('premio',0)">P1</button>
+<button class="b" onclick="cmd('premio',1)">P2</button>
+<button class="b" onclick="cmd('premio',2)">P3</button>
+<button class="b" onclick="cmd('premio',3)">P4</button>
+</div>
+<div class="grid">
+<button onclick="cmd('modo')">🏆 Reto/Libre</button>
+<button onclick="cmd('colgar')">📞 Colgar</button>
+<button class="red" onclick="cmd('reiniciar')">↺ Reiniciar todo</button>
+</div>
+<script>
+function cmd(c,a){
+fetch('/api/cmd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd:c,arg:a})})
+.then(r=>{document.getElementById('st').textContent=r.ok?'✅ enviado '+new Date().toLocaleTimeString():'❌ error';})
+.catch(()=>{document.getElementById('st').textContent='❌ sin conexión al PC';});
+if(navigator.vibrate)navigator.vibrate(20);
+}
+// Chequea conexión al cargar
+fetch('/api/stream',{method:'HEAD'}).then(()=>{document.getElementById('st').textContent='✅ conectado al PC';}).catch(()=>{});
+</script>
+</body>
+</html>

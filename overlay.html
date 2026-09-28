@@ -397,6 +397,34 @@ function playAudio(){const a=document.getElementById('aud');if(a)a.play().catch(
 function avanzarFase(){fase='pregunta';document.getElementById('mediaZone').style.display='none';document.querySelector('.grid').style.display='';const v=document.getElementById('verdict');v.textContent='Elige con A/B/C/D y pulsa R';v.className='hint';if(document.activeElement)document.activeElement.blur();}
 function teclaG(){const p=preguntaActual();if(!p)return;const t=p.tipo||'texto';if(t==='audio')playAudio();else if(t==='video-pregunta'||t==='videopregunta'){if(fase==='video')avanzarFase();}if(document.activeElement)document.activeElement.blur();}
 function esFaseVideo(){const p=preguntaActual();if(!p)return false;const t=p.tipo||'texto';return (t==='video-pregunta'||t==='videopregunta')&&fase==='video';}
+// ---------- Control remoto (celular -> este overlay vía el servidor local) ----------
+function remoteCmd(cmd,arg){
+switch(cmd){
+case 'marcar':marcar(+arg);break;
+case 'revelar':revelar();break;
+case 'siguiente':siguiente();break;
+case 'anterior':anterior();break;
+case 'c50':usar50();break;
+case 'pista':usarPista();break;
+case 'llamada':usarLlamada();break;
+case 'colgar':colgar();break;
+case 'cambio':usarCambio();break;
+case 'reiniciar':reiniciarTodo();break;
+case 'modo':toggleModo();break;
+case 'audio':teclaG();break;
+case 'puntos':ajustarPts(+arg);break;
+case 'premio':premio(+arg);break;
+}
+}
+(function(){
+try{
+if(location.protocol.indexOf('http')!==0)return;
+let errs=0;
+const es=new EventSource('/api/stream');
+es.onerror=()=>{if(++errs>2)es.close();};
+es.onmessage=e=>{try{const m=JSON.parse(e.data);remoteCmd(m.cmd,m.arg);}catch(_){}};
+}catch(_){}
+})();
 document.addEventListener('keydown',e=>{
 if(e.target && (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable))return;
 if(finalAbierto&&(e.key==='Enter'||e.code==='Space')){e.preventDefault();startReto();return;}
