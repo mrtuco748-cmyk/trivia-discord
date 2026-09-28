@@ -6,81 +6,103 @@
 <title>Control Trivia 📱</title>
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:Segoe UI,Arial,sans-serif;-webkit-tap-highlight-color:transparent}
-body{background:#1e1f22;color:#fff;min-height:100vh;padding:14px;max-width:520px;margin:0 auto}
-h1{font-size:20px;text-align:center;margin-bottom:4px}
-#st{text-align:center;font-size:13px;color:#949ba4;margin-bottom:8px}
-#salaRow{display:flex;gap:8px;margin-bottom:12px}
-#salaRow input{flex:1;background:#2b2d31;color:#fff;border:1px solid #555;border-radius:10px;padding:12px;font-size:17px;font-weight:800;text-transform:uppercase;text-align:center;letter-spacing:3px}
-#salaRow button{background:#5865f2;color:#fff;border:none;border-radius:10px;padding:12px 16px;font-size:15px;font-weight:800;cursor:pointer}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
-button{border:none;border-radius:12px;padding:18px 8px;font-size:18px;font-weight:800;color:#fff;background:#35373c;cursor:pointer;touch-action:manipulation}
-button:active{filter:brightness(1.4)}
+*{box-sizing:border-box;margin:0;padding:0;font-family:Segoe UI,Arial,sans-serif;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+body{background:#141519;color:#fff;min-height:100vh;padding:12px 12px 30px;max-width:520px;margin:0 auto;touch-action:manipulation}
+#head{position:sticky;top:0;background:#141519;padding:8px 0 10px;z-index:5}
+h1{font-size:20px;text-align:center}
+#conn{display:flex;align-items:center;justify-content:center;gap:8px;margin:6px 0;font-size:14px;font-weight:700}
+#dot{width:12px;height:12px;border-radius:50%;background:#ed4245}
+#dot.ok{background:#3ba55d}
+#salaRow{display:flex;gap:8px}
+#salaRow input{flex:1;background:#2b2d31;color:#fff;border:2px solid #555;border-radius:12px;padding:14px;font-size:20px;font-weight:800;text-transform:uppercase;text-align:center;letter-spacing:4px;user-select:text;-webkit-user-select:text}
+#salaRow button{background:#5865f2;color:#fff;border:none;border-radius:12px;padding:14px 18px;font-size:16px;font-weight:800;cursor:pointer}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+button{min-height:64px;border:none;border-radius:14px;font-size:20px;font-weight:800;color:#fff;background:#35373c;cursor:pointer;touch-action:manipulation;transition:transform .06s}
+button:active{transform:scale(.94);filter:brightness(1.4)}
+button.echo{outline:3px solid #fff}
 .a{background:#5865f2}.b{background:#57a25c}.c{background:#c98a2b}.d{background:#c84a4a}
-.big{background:#5865f2;grid-column:span 2;padding:22px}
-.go{background:#3ba55d;grid-column:span 2;padding:22px}
-.gold{background:#7a5c1e}
-.red{background:#7d2d2e;grid-column:span 2}
-.sec{margin:14px 0 8px;color:#b5bac1;font-size:13px;font-weight:700;text-transform:uppercase}
+.big{background:#5865f2;grid-column:span 2;min-height:84px;font-size:24px}
+.go{background:#3ba55d;grid-column:span 2;min-height:84px;font-size:24px}
+.gold{background:#7a5c1e;min-height:72px}
+.red{background:#7d2d2e;grid-column:span 2;min-height:72px}
+.red.armed{background:#ed4245}
+.sec{margin:16px 0 8px;color:#b5bac1;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#2b2d31;border:2px solid #3ba55d;border-radius:12px;padding:10px 22px;font-size:16px;font-weight:800;display:none;z-index:10}
 </style>
 </head>
 <body>
+<div id="head">
 <h1>🎮 Control Trivia</h1>
-<div id="st">escribe el código de sala del overlay</div>
-<div id="salaRow"><input id="sala" maxlength="8" placeholder="XXXX"><button onclick="conectar()">Conectar</button></div>
-<div class="sec">Respuestas</div>
-<div class="grid4">
-<button class="a" onclick="cmd('marcar',0)">A</button>
-<button class="b" onclick="cmd('marcar',1)">B</button>
-<button class="c" onclick="cmd('marcar',2)">C</button>
-<button class="d" onclick="cmd('marcar',3)">D</button>
+<div id="conn"><span id="dot"></span><span id="st">desconectado</span></div>
+<div id="salaRow"><input id="sala" maxlength="8" placeholder="SALA" autocomplete="off"><button onclick="conectar()">Conectar</button></div>
 </div>
-<div class="grid">
-<button class="big" onclick="cmd('revelar')">🔎 Revelar</button>
-<button class="go" onclick="cmd('siguiente')">Siguiente →</button>
-<button onclick="cmd('anterior')">← Anterior</button>
-<button onclick="cmd('audio')">▶ Audio / G</button>
+<div class="sec">Respuestas (toca una)</div>
+<div class="grid4">
+<button class="a" onclick="cmd(this,'marcar',0)">A</button>
+<button class="b" onclick="cmd(this,'marcar',1)">B</button>
+<button class="c" onclick="cmd(this,'marcar',2)">C</button>
+<button class="d" onclick="cmd(this,'marcar',3)">D</button>
+</div>
+<button class="big" onclick="cmd(this,'revelar')">🔎 REVELAR</button>
+<div style="height:12px"></div>
+<button class="go" onclick="cmd(this,'siguiente')">SIGUIENTE →</button>
+<div class="grid" style="margin-top:12px">
+<button onclick="cmd(this,'anterior')">← Anterior</button>
+<button onclick="cmd(this,'audio')">▶ Audio / G</button>
 </div>
 <div class="sec">Comodines</div>
 <div class="grid">
-<button class="gold" onclick="cmd('c50')">✂ 50%</button>
-<button class="gold" onclick="cmd('pista')">💡 Pista</button>
-<button class="gold" onclick="cmd('llamada')">📞 Llamada</button>
-<button class="gold" onclick="cmd('cambio')">🔀 Cambio</button>
+<button class="gold" onclick="cmd(this,'c50')">✂ 50%</button>
+<button class="gold" onclick="cmd(this,'pista')">💡 Pista</button>
+<button class="gold" onclick="cmd(this,'llamada')">📞 Llamada</button>
+<button class="gold" onclick="cmd(this,'cambio')">🔀 Cambio</button>
 </div>
-<div class="sec">Puntos (premia al que acertó)</div>
+<div class="sec">Premia al que acertó (+100)</div>
 <div class="grid4">
-<button class="b" onclick="cmd('premio',0)">P1</button>
-<button class="b" onclick="cmd('premio',1)">P2</button>
-<button class="b" onclick="cmd('premio',2)">P3</button>
-<button class="b" onclick="cmd('premio',3)">P4</button>
+<button class="b" onclick="cmd(this,'premio',0)">P1</button>
+<button class="b" onclick="cmd(this,'premio',1)">P2</button>
+<button class="b" onclick="cmd(this,'premio',2)">P3</button>
+<button class="b" onclick="cmd(this,'premio',3)">P4</button>
 </div>
 <div class="grid">
-<button onclick="cmd('modo')">🏆 Reto/Libre</button>
-<button onclick="cmd('colgar')">📞 Colgar</button>
-<button class="red" onclick="cmd('reiniciar')">↺ Reiniciar todo</button>
+<button onclick="cmd(this,'modo')">🏆 Reto</button>
+<button onclick="cmd(this,'colgar')">📞 Colgar</button>
+<button class="red" id="bReset" onclick="resetSeguro(this)">↺ Reiniciar</button>
 </div>
+<div id="toast"></div>
 <script>
-let cli=null, sala='';
-function st(t){document.getElementById('st').textContent=t;}
+let cli=null, sala='', resetArmado=false;
+const dot=document.getElementById('dot');
+function st(t,ok){document.getElementById('st').textContent=t;dot.className=ok?'ok':'';}
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',1500);}
 function conectar(){
 sala=(document.getElementById('sala').value||'').trim().toUpperCase();
-if(!sala){st('escribe el código de sala primero');return;}
+if(!sala){toast('Escribe el código de sala');return;}
 try{localStorage.setItem('triviaSala',sala);}catch(_){}
-if(cli)cli.end();
-st('conectando a sala '+sala+'…');
-cli=mqtt.connect('wss://broker.emqx.io:8084/mqtt',{connectTimeout:8000});
-cli.on('connect',()=>st('✅ conectado a sala '+sala));
-cli.on('reconnect',()=>st('🔄 reconectando…'));
-cli.on('offline',()=>st('❌ sin conexión'));
-cli.on('error',()=>st('❌ error de conexión'));
+if(cli)cli.end(true);
+st('conectando…',false);
+cli=mqtt.connect('wss://broker.emqx.io:8084/mqtt',{connectTimeout:8000,reconnectPeriod:3000});
+cli.on('connect',()=>st('sala '+sala+' ● en vivo',true));
+cli.on('reconnect',()=>st('reconectando…',false));
+cli.on('offline',()=>st('sin conexión',false));
+cli.on('error',()=>st('error de conexión',false));
+document.activeElement.blur();
 }
-function cmd(c,a){
-if(!cli||!cli.connected){st('conéctate a la sala primero');return;}
+function cmd(btn,c,a){
+if(!cli||!cli.connected){toast('Primero conéctate a la sala');return;}
 cli.publish('trivia/'+sala+'/cmd',JSON.stringify({cmd:c,arg:a}));
-st('✅ enviado '+new Date().toLocaleTimeString());
-if(navigator.vibrate)navigator.vibrate(20);
+btn.classList.add('echo');setTimeout(()=>btn.classList.remove('echo'),400);
+if(navigator.vibrate)navigator.vibrate(25);
+}
+// Reiniciar pide doble toque para no borrar sin querer
+function resetSeguro(btn){
+if(!cli||!cli.connected){toast('Primero conéctate a la sala');return;}
+if(!resetArmado){resetArmado=true;btn.classList.add('armed');btn.textContent='¿Seguro? Toca otra vez';setTimeout(()=>{resetArmado=false;btn.classList.remove('armed');btn.textContent='↺ Reiniciar';},3000);return;}
+resetArmado=false;btn.classList.remove('armed');btn.textContent='↺ Reiniciar';
+cli.publish('trivia/'+sala+'/cmd',JSON.stringify({cmd:'reiniciar'}));
+toast('↺ Reiniciado');
+if(navigator.vibrate)navigator.vibrate([40,40,40]);
 }
 (function(){
 const q=new URLSearchParams(location.search).get('sala');
