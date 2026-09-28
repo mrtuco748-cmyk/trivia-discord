@@ -1,0 +1,51 @@
+CÓMO USAR AUDIOS Y VIDEOS EN LA TRIVIA
+========================================
+1) Copia tus archivos en ESTA carpeta (media/).
+   Formatos: .mp3 / .wav / .ogg para audio, .mp4 / .webm para video.
+   Ejemplo: media/cancion.mp3, media/escena1.mp4
+
+2) Agrega la pregunta en preguntas.json (hay ejemplos abajo).
+   La ruta se escribe como "media/nombre-del-archivo.mp4".
+
+3) Recarga la fuente en OBS. Si falta un archivo, el overlay
+   te avisa en rojo con el nombre que no encontró.
+
+TIPOS DE PREGUNTA
+-----------------
+A) Audio: se escucha y se responde con A/B/C/D.
+{
+  "categoria": "musica",
+  "tipo": "audio",
+  "audio": "media/cancion.mp3",
+  "pregunta": "¿De qué película es esta música?",
+  "respuestas": ["Titanic", "Star Wars", "Harry Potter", "Piratas del Caribe"],
+  "correcta": 2
+}
+
+B) Varios videos: se muestran 4 videos y se elige el correcto
+   (clic en el video = marcar + reproducir/pausar).
+{
+  "categoria": "pelis",
+  "tipo": "videos",
+  "pregunta": "¿En cuál de estos videos aparece el coche rojo?",
+  "videos": ["media/v1.mp4", "media/v2.mp4", "media/v3.mp4", "media/v4.mp4"],
+  "respuestas": ["Video 1", "Video 2", "Video 3", "Video 4"],
+  "correcta": 1
+}
+
+C) Video-pregunta: primero se ve UN video, luego (con G o el botón)
+   aparece la pregunta con sus 4 respuestas.
+{
+  "categoria": "deportes",
+  "tipo": "video-pregunta",
+  "video": "media/jugada.mp4",
+  "pregunta": "¿Qué hizo mal el jugador del video?",
+  "respuestas": ["Falta", "Fuera de juego", "Mano", "Nada"],
+  "correcta": 2
+}
+
+TECLAS
+------
+G = reproducir audio / mostrar la pregunta tras el video.
+Todo lo demás (A-D, R, comodines, puntos) funciona igual,
+también en modo reto.

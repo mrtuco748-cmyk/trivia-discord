@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Trivia Overlay - OBS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Segoe UI,Arial,sans-serif}
+html,body{background:transparent!important;width:100%;height:100%;overflow:hidden}
+body{display:flex;flex-direction:column;justify-content:space-between;padding:18px 22px}
+#topbar{display:flex;justify-content:space-between;align-items:flex-start}
+#scoreBox{background:rgba(30,31,34,.92);border:2px solid #ffca28;border-radius:12px;padding:8px 16px;color:#fff;font-size:22px;font-weight:800;white-space:nowrap}
+#scoreBox button{background:#4a4d53;color:#fff;border:none;border-radius:6px;padding:2px 10px;font-size:15px;font-weight:800;cursor:pointer;margin-left:6px}
+#comodBox{display:flex;gap:8px}
+#comodBox button{background:rgba(30,31,34,.92);color:#fff;border:2px solid #7a5c1e;border-radius:10px;padding:8px 12px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
+#comodBox button:disabled{opacity:.3;cursor:default}
+#comodStatus{display:none;background:rgba(30,31,34,.92);border-radius:10px;padding:8px 14px;font-size:18px;letter-spacing:4px}
+#comodStatus s{opacity:.3}
+#retoBar{display:none;justify-content:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+body.reto #retoBar{display:flex}
+.chip{background:rgba(30,31,34,.92);border:2px solid #555;border-radius:20px;padding:4px 12px;color:#dcddde;font-size:14px;font-weight:700}
+.chip.cur{border-color:#5865f2;box-shadow:0 0 12px rgba(88,101,242,.7)}
+.chip.ok{border-color:#3ba55d;color:#3ba55d}
+.chip.fail{border-color:#ed4245;color:#ed4245}
+#spacer{flex:1}
+#box{align-self:center;width:min(1150px,96%);background:rgba(12,13,17,.55);border-radius:14px;padding:12px 22px 10px;border:3px solid #5865f2;text-align:center}
+#cat{display:inline-block;background:#5865f2;padding:2px 14px;border-radius:20px;font-size:13px;font-weight:800;margin-bottom:6px;color:#fff}
+#q{font-size:clamp(20px,2.6vw,29px);font-weight:800;color:#fff;margin-bottom:10px;line-height:1.2;word-wrap:break-word;text-shadow:0 2px 6px #000,0 0 2px #000}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:left}
+@media(max-width:800px){.grid{grid-template-columns:1fr 1fr}}
+.opt{display:flex;align-items:center;gap:10px;background:rgba(30,32,40,.55);border:3px solid transparent;border-radius:10px;padding:10px 12px;font-size:clamp(15px,1.7vw,19px);font-weight:700;color:#fff;min-width:0;cursor:pointer;text-shadow:0 2px 5px #000}
+.opt span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.letter{width:30px;height:30px;flex-shrink:0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:16px}
+.a .letter{background:#5865f2}.b .letter{background:#57a25c}.c .letter{background:#c98a2b}.d .letter{background:#c84a4a}
+.opt.selected{border-color:#5865f2;background:rgba(64,70,117,.75)}
+.opt.correct{border-color:#3ba55d;background:rgba(45,125,70,.8)}
+.opt.dim{opacity:.35}
+.opt.wrong{border-color:#ed4245;background:rgba(125,45,46,.8)}
+.opt.eliminada{display:none}
+.opt.suspense{border-color:#ffca28!important;background:#5a4a1e!important;animation:flash .18s infinite alternate}
+@keyframes flash{from{box-shadow:0 0 6px rgba(255,202,40,.4);}to{box-shadow:0 0 24px rgba(255,202,40,1);}}
+#players{margin-top:6px;display:flex;flex-direction:column;gap:4px}
+.pl{background:rgba(30,31,34,.92);border-radius:8px;padding:4px 10px;color:#fff;font-size:14px;display:flex;gap:8px;align-items:center}
+.pname{flex:1;outline:none;border-bottom:1px dashed #666;min-width:60px}
+.pl b{color:#ffca28;min-width:34px;text-align:right}
+.pl button{background:#3ba55d;color:#fff;border:none;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:800;cursor:pointer}
+#verdict{font-size:19px;font-weight:800;margin-top:6px;min-height:24px}
+#mediaZone{display:none;margin-bottom:10px}
+.audRow{display:flex;gap:10px;align-items:center;background:rgba(20,21,26,.55);border-radius:10px;padding:10px 14px}
+.audRow button{background:#57a25c;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:16px;font-weight:800;cursor:pointer}
+.audRow audio{flex:1}
+.vmain{width:min(640px,90%);max-height:38vh;border-radius:10px;background:#000}
+.faseBtn{background:#3ba55d;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px}
+.vwrap{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
+.vwrap video{width:100%;max-height:20vh;border-radius:8px;background:#000;cursor:pointer}
+.vwrap small{color:#b5bac1;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mediaErr{color:#ed4245;font-weight:700;margin-top:6px}
+#verdict.ok{color:#3ba55d}#verdict.bad{color:#ed4245}#verdict.hint{color:#ffca28}
+#ctr{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+#ctr button{background:#5865f2;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer}
+#ctr button.ghost{background:#4a4d53}
+#ctr button.danger{background:#7d2d2e}
+#ctr button.gold{background:#7a5c1e}
+#count{color:#b5bac1;font-size:12px;margin-top:4px}
+body.obs #ctr,body.obs #count,body.obs #comodBox,body.obs .manual{display:none}
+body.obs #comodStatus{display:block}
+#call{display:none;position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#141519;border:2px solid #57a25c;border-radius:12px;padding:10px 20px;color:#fff;font-size:20px;font-weight:800;z-index:10}
+#call button{margin-left:12px;background:#c84a4a;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:14px;font-weight:700;cursor:pointer}
+#final{display:none;position:fixed;inset:0;background:rgba(15,16,18,.96);z-index:20;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
+#final.show{display:flex}
+#final h1{font-size:clamp(40px,7vw,80px);margin-bottom:12px}
+#final p{font-size:clamp(18px,3vw,28px);color:#dcddde;margin-bottom:24px}
+#final button{background:#5865f2;color:#fff;border:none;border-radius:10px;padding:12px 24px;font-size:18px;font-weight:800;cursor:pointer;margin:4px}
+#final button.ghost{background:#4a4d53}
+</style>
+</head>
+<body>
+<div id="call">📞 Llamada <span id="calltime">0:40</span><button onclick="colgar()">Colgar</button></div>
+<div id="final"><h1 id="finalT"></h1><p id="finalP"></p><div><button onclick="startReto()">↺ Jugar de nuevo</button><button class="ghost" onclick="setModo('libre')">Modo libre</button></div></div>
+<div id="topbar">
+<div id="scoreCol">
+<div id="scoreBox">⭐ <span id="pts">0</span> pts<span class="manual"><button onclick="ajustarPts(100)">+</button><button onclick="ajustarPts(-100)">−</button></span></div>
+<div id="players">
+<div class="pl"><span class="pname" contenteditable="true" spellcheck="false">Jugador 1</span><b id="ppts0">0</b><span class="manual"><button onclick="premio(0)">+100</button></span></div>
+<div class="pl"><span class="pname" contenteditable="true" spellcheck="false">Jugador 2</span><b id="ppts1">0</b><span class="manual"><button onclick="premio(1)">+100</button></span></div>
+<div class="pl"><span class="pname" contenteditable="true" spellcheck="false">Jugador 3</span><b id="ppts2">0</b><span class="manual"><button onclick="premio(2)">+100</button></span></div>
+<div class="pl"><span class="pname" contenteditable="true" spellcheck="false">Jugador 4</span><b id="ppts3">0</b><span class="manual"><button onclick="premio(3)">+100</button></span></div>
+</div>
+</div>
+<div id="comodStatus">✂💡📞🔀</div>
+<div id="comodBox">
+<button id="b50" onclick="usar50()">✂ 50% (X)</button>
+<button id="bPista" onclick="usarPista()">💡 Pista (P)</button>
+<button id="bLlama" onclick="usarLlamada()">📞 40s (L)</button>
+<button id="bCambio" onclick="usarCambio()">🔀 Cambio (N)</button>
+</div>
+</div>
+<div id="retoBar"></div>
+<div id="spacer"></div>
+<div id="box">
+<div id="cat">Trivia</div>
+<div id="q">Cargando...</div>
+<div id="mediaZone"></div>
+<div class="grid">
+<div class="opt a" onclick="marcar(0)"><span class="letter">A</span><span id="r0"></span></div>
+<div class="opt b" onclick="marcar(1)"><span class="letter">B</span><span id="r1"></span></div>
+<div class="opt c" onclick="marcar(2)"><span class="letter">C</span><span id="r2"></span></div>
+<div class="opt d" onclick="marcar(3)"><span class="letter">D</span><span id="r3"></span></div>
+</div>
+<div id="verdict"></div>
+<div id="ctr">
+<button id="bModo" class="gold" onclick="toggleModo()">🏆 Modo reto (M)</button>
+<button onclick="revelar()">Revelar (R)</button>
+<button onclick="siguiente()" style="background:#3ba55d">Siguiente (Espacio)</button>
+<button class="ghost" onclick="anterior()">←</button>
+<button class="danger" onclick="reiniciarTodo()">↺ Reiniciar todo (T)</button>
+<button class="ghost" onclick="toggleObs()">Ocultar botones (H)</button>
+</div>
+<div id="count"></div>
+</div>
+<script>
+if(new URLSearchParams(location.search).get('obs')==='1')document.body.classList.add('obs');
+// Categorías del reto. Para añadir una (ej. geografía, música):
+// 1) agrégala aquí, 2) añade preguntas con esa "categoria" en preguntas.json
+const CATS=[
+{id:'videojuegos',nombre:'Videojuegos',emoji:'🎮',match:['videojuego']},
+{id:'pelis',nombre:'Pelis/Series',emoji:'🎬',match:['peli','serie','cine']},
+{id:'historia',nombre:'Historia',emoji:'🏛️',match:['historia']},
+{id:'deportes',nombre:'Deportes',emoji:'⚽',match:['deporte']},
+{id:'ciencia',nombre:'Ciencia',emoji:'🔬',match:['ciencia']},
+{id:'cultura',nombre:'Cultura general',emoji:'🧠',match:['cultura','general']}
+];
+let preguntas=[
+{categoria:"videojuegos",pregunta:"¿Cómo se llama el protagonista de The Legend of Zelda?",respuestas:["Zelda","Link","Ganon","Epona"],correcta:1}
+];
+fetch('preguntas.json').then(r=>r.ok?r.json():null).then(j=>{if(j&&j.length){preguntas=j;i=0;if(modo==='reto')startReto();else render();}}).catch(()=>{});
+let i=0, seleccionado=-1, revelado=false, revelando=false, puntos=0, ptsJ=[0,0,0,0], fase='pregunta';
+let comod={c50:true,pista:true,llamada:true,cambio:true};
+let callInt=null, callT=0;
+let modo='libre', orden=[], rIdx=0, lastOk=null, retoQ=null, finalAbierto=false;
+function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+function catId(p){const n=norm(p.categoria);const c=CATS.find(c=>c.match.some(m=>n.includes(m)));return c?c.id:null;}
+function catMeta(id){return CATS.find(c=>c.id===id);}
+function grupo(){const g={};preguntas.forEach(p=>{const id=catId(p);if(id){(g[id]=g[id]||[]).push(p);}});return g;}
+function pintaPregunta(p, etiqueta){
+seleccionado=-1; revelado=false;
+colgar(true);
+restauraOpts();
+document.getElementById('cat').textContent=etiqueta;
+document.getElementById('q').textContent=p.pregunta;
+const v=document.getElementById('verdict'); v.textContent=''; v.className='';
+document.querySelectorAll('.opt').forEach((el,k)=>{document.getElementById('r'+k).textContent=p.respuestas[k]||'';});
+renderMedia(p);
+}
+function preguntaActual(){return modo==='reto'?retoQ:preguntas[i];}
+function render(){
+const p=preguntas[i];
+pintaPregunta(p, p.categoria||'Trivia');
+document.getElementById('count').textContent=`Pregunta ${i+1}/${preguntas.length} — A/B/C/D marca · R revela · X/P/L/N comodines · 5-8 premio J1-J4`;
+}
+// ---------- MODO RETO: 1 bien de cada categoría para ganar, 1 fallo = pierdes ----------
+function setModo(m){
+modo=m;finalAbierto=false;
+document.getElementById('final').classList.remove('show');
+document.body.classList.toggle('reto',m==='reto');
+document.getElementById('bModo').textContent=m==='reto'?'🎯 Modo libre (M)':'🏆 Modo reto (M)';
+if(m==='reto')startReto();else render();
+if(document.activeElement)document.activeElement.blur();
+}
+function toggleModo(){setModo(modo==='reto'?'libre':'reto');}
+function startReto(){
+puntos=0;pintaPts();
+comod={c50:true,pista:true,llamada:true,cambio:true};
+finalAbierto=false;
+document.getElementById('final').classList.remove('show');
+const g=grupo();
+orden=CATS.map(c=>c.id).filter(id=>g[id]&&g[id].length).sort(()=>Math.random()-.5);
+if(!orden.length){alert('No hay preguntas con esas categorías en preguntas.json');setModo('libre');return;}
+rIdx=0;lastOk=null;
+loadReto();renderComodines();
+}
+function loadReto(){
+const g=grupo(), id=orden[rIdx];
+const pool=g[id];
+retoQ=pool[Math.floor(Math.random()*pool.length)];
+const m=catMeta(id);
+pintaPregunta(retoQ,`${m.emoji} ${m.nombre} (${rIdx+1}/${orden.length})`);
+document.getElementById('count').textContent=`Reto: responde bien 1 de cada categoría. ¡Un fallo y pierdes!`;
+pintaRetoBar(id,null);
+}
+function pintaRetoBar(actual, estados){
+document.getElementById('retoBar').innerHTML=orden.map((id,k)=>{
+const m=catMeta(id);
+let cls='chip';
+if(estados&&estados[id])cls+=' '+estados[id];
+else if(id===actual)cls+=' cur';
+return `<span class="${cls}">${m.emoji} ${m.nombre}</span>`;
+}).join('');
+}
+function marcaChip(id, estado){
+const g=grupo();
+const estados={};
+orden.forEach(x=>{if(orden.indexOf(x)<rIdx)estados[x]='ok';});
+if(estado)estados[id]=estado;
+pintaRetoBar(id,estados);
+}
+function marcar(k){
+if(revelado||revelando||finalAbierto) return;
+if(document.querySelectorAll('.opt')[k].classList.contains('eliminada')) return;
+if(esFaseVideo()){const vv=document.getElementById('verdict');vv.textContent='Mira el video y pulsa G para ver la pregunta';vv.className='hint';return;}
+seleccionado=k;
+document.querySelectorAll('.opt').forEach((el,j)=>el.classList.toggle('selected',j===k));
+const _p=preguntaActual();
+if(_p&&(_p.tipo||'texto')==='videos'){document.querySelectorAll('.opt video').forEach((vv,j)=>{if(!vv)return;if(j===k){vv.paused?vv.play().catch(()=>{}):vv.pause();}else vv.pause();});}
+if(document.activeElement)document.activeElement.blur();
+}
+// Sonido sin archivos: WebAudio (actívalo clicando una vez en Interactuar)
+let AC=null;
+function aseguraAudio(){try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();}catch(e){}}
+function tono(f,t0,d,tipo,vol){try{if(!AC)return;const o=AC.createOscillator(),g=AC.createGain();o.type=tipo||'square';o.frequency.value=f;const t=AC.currentTime+t0;g.gain.setValueAtTime(vol||0.05,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d);}catch(e){}}
+function blip(f,d){tono(f,0,d||0.06,'square',0.04);}
+function fanfarria(){tono(660,0,.12);tono(880,.12,.12);tono(1320,.24,.3);}
+function errorSonido(){tono(160,0,.4,'sawtooth',0.06);}
+// Revelar: primero show de luces con suspenso (~3s), luego el resultado
+function revelar(){
+if(revelado||revelando||finalAbierto)return;
+const p=preguntaActual();
+if(modo==='reto'&&seleccionado<0){
+const v=document.getElementById('verdict');v.textContent='Marca una respuesta con A/B/C/D primero';v.className='hint';return;
+}
+if(esFaseVideo()){const v2=document.getElementById('verdict');v2.textContent='Primero mira el video y pulsa G';v2.className='hint';return;}
+aseguraAudio();
+revelando=true;
+const v=document.getElementById('verdict');v.textContent='🔎 Redoble de tambores…';v.className='hint';
+const opts=[...document.querySelectorAll('.opt')].filter(el=>!el.classList.contains('eliminada'));
+let step=0,delay=70,k=-1;
+(function tick(){
+if(k>=0)opts[k%opts.length].classList.remove('suspense');
+k++;step++;
+opts[k%opts.length].classList.add('suspense');
+blip(480+step*28,0.05);
+delay*=1.08;
+if(step<20)setTimeout(tick,delay);
+else{opts.forEach(o=>o.classList.remove('suspense'));revelando=false;doRevelar();}
+})();
+if(document.activeElement)document.activeElement.blur();}
+function doRevelar(){
+revelado=true;
+const p=preguntaActual();
+const v=document.getElementById('verdict');
+document.querySelectorAll('.opt').forEach((el,k)=>{
+el.classList.remove('selected');
+el.classList.toggle('correct',k===p.correcta);
+if(seleccionado>=0 && k===seleccionado && k!==p.correcta) el.classList.add('wrong');
+else if(k!==p.correcta) el.classList.add('dim');
+});
+const ok=seleccionado===p.correcta;
+if(seleccionado<0){v.textContent='Respuesta correcta: '+['A','B','C','D'][p.correcta];v.className='';}
+else if(ok){v.textContent=modo==='reto'?'¡Correcto! +100 — Espacio para continuar':'¡Correcto! +100';v.className='ok';puntos+=100;pintaPts();fanfarria();}
+else{v.textContent='Fallaste — era la '+['A','B','C','D'][p.correcta];v.className='bad';errorSonido();}
+if(modo==='reto'){
+lastOk=ok;
+marcaChip(orden[rIdx], ok?'ok':'fail');
+if(!ok)setTimeout(gameOver,1800);
+}
+if(document.activeElement)document.activeElement.blur();}
+function siguiente(){
+if(finalAbierto||revelando)return;
+if(modo==='reto'){
+if(!revelado||!lastOk)return;
+rIdx++;
+if(rIdx>=orden.length)win();else loadReto();
+if(document.activeElement)document.activeElement.blur();
+return;
+}
+i=(i+1)%preguntas.length;render();if(document.activeElement)document.activeElement.blur();}
+function anterior(){
+if(modo==='reto')return;
+i=(i-1+preguntas.length)%preguntas.length;render();if(document.activeElement)document.activeElement.blur();}
+function win(){
+finalAbierto=true;
+document.getElementById('finalT').textContent='🏆 ¡Ganaste!';
+document.getElementById('finalP').textContent=`Respondiste bien las ${orden.length} categorías · ${puntos} pts`;
+document.getElementById('final').classList.add('show');
+}
+function gameOver(){
+if(finalAbierto)return;
+finalAbierto=true;
+const m=catMeta(orden[rIdx]);
+document.getElementById('finalT').textContent='❌ Perdiste';
+document.getElementById('finalP').textContent=`Fallaste en ${m.emoji} ${m.nombre} · Aciertos: ${rIdx}/${orden.length} · ${puntos} pts`;
+document.getElementById('final').classList.add('show');
+}
+function toggleObs(){document.body.classList.toggle('obs');if(document.activeElement)document.activeElement.blur();}
+function pintaPts(){document.getElementById('pts').textContent=puntos;for(let j=0;j<4;j++){const e=document.getElementById('ppts'+j);if(e)e.textContent=ptsJ[j];}}
+function premio(j){ptsJ[j]+=100;pintaPts();if(document.activeElement)document.activeElement.blur();}
+function ajustarPts(d){puntos=Math.max(0,puntos+d);pintaPts();if(document.activeElement)document.activeElement.blur();}
+function reiniciarTodo(){
+i=0;puntos=0;ptsJ=[0,0,0,0];pintaPts();
+comod={c50:true,pista:true,llamada:true,cambio:true};
+setModo('libre');
+render();renderComodines();
+if(document.activeElement)document.activeElement.blur();
+}
+function renderComodines(){
+document.getElementById('b50').disabled=!comod.c50;
+document.getElementById('bPista').disabled=!comod.pista;
+document.getElementById('bLlama').disabled=!comod.llamada;
+document.getElementById('bCambio').disabled=!comod.cambio;
+const s=['✂','💡','📞','🔀'], u=[comod.c50,comod.pista,comod.llamada,comod.cambio];
+document.getElementById('comodStatus').innerHTML=s.map((e,k)=>u[k]?e:`<s>${e}</s>`).join('');
+}
+function usar50(){
+if(finalAbierto||revelando||!comod.c50||revelado)return;
+comod.c50=false;
+const p=preguntaActual();
+const malas=[0,1,2,3].filter(k=>k!==p.correcta).sort(()=>Math.random()-.5).slice(0,2);
+const opts=document.querySelectorAll('.opt');
+malas.forEach(k=>opts[k].classList.add('eliminada'));
+if(malas.includes(seleccionado)){seleccionado=-1;opts.forEach(el=>el.classList.remove('selected'));}
+renderComodines();if(document.activeElement)document.activeElement.blur();
+}
+function usarPista(){
+if(finalAbierto||revelando||!comod.pista||revelado)return;
+comod.pista=false;
+const p=preguntaActual();
+const buena=p.respuestas[p.correcta]||'';
+const txt=p.pista||`Empieza con "${buena.charAt(0)}" y tiene ${buena.length} letras`;
+const v=document.getElementById('verdict');v.textContent='💡 '+txt;v.className='hint';
+renderComodines();if(document.activeElement)document.activeElement.blur();
+}
+function usarLlamada(){
+if(finalAbierto||revelando||!comod.llamada||callInt)return;
+comod.llamada=false;renderComodines();
+callT=40;document.getElementById('call').style.display='block';pintaCall();
+callInt=setInterval(()=>{
+callT--;pintaCall();
+if(callT<=0){clearInterval(callInt);callInt=null;
+document.getElementById('calltime').textContent='¡Tiempo!';
+setTimeout(()=>document.getElementById('call').style.display='none',2000);}
+},1000);
+if(document.activeElement)document.activeElement.blur();
+}
+function pintaCall(){
+document.getElementById('calltime').textContent=`0:${String(callT%60).padStart(2,'0')}`;
+}
+function colgar(silencio){
+if(callInt){clearInterval(callInt);callInt=null;}
+document.getElementById('call').style.display='none';
+if(!silencio&&document.activeElement)document.activeElement.blur();
+}
+function usarCambio(){
+if(finalAbierto||revelando||!comod.cambio)return;
+if(modo==='reto'){
+const pool=grupo()[orden[rIdx]]||[];
+if(pool.length<2){const v=document.getElementById('verdict');v.textContent='No hay más preguntas en esta categoría';v.className='hint';return;}
+let nq;do{nq=pool[Math.floor(Math.random()*pool.length)];}while(nq===retoQ);
+comod.cambio=false;retoQ=nq;
+pintaPregunta(retoQ,`${catMeta(orden[rIdx]).emoji} ${catMeta(orden[rIdx]).nombre} (${rIdx+1}/${orden.length})`);
+renderComodines();if(document.activeElement)document.activeElement.blur();
+return;
+}
+if(preguntas.length<2)return;
+comod.cambio=false;
+let j;do{j=Math.floor(Math.random()*preguntas.length);}while(j===i);
+i=j;render();renderComodines();
+if(document.activeElement)document.activeElement.blur();
+}
+// ---------- Preguntas multimedia (audio / videos / video-pregunta) ----------
+function restauraOpts(){const L=['a','b','c','d'];document.querySelectorAll('.opt').forEach((el,k)=>{el.className='opt '+L[k];el.onclick=()=>marcar(k);el.innerHTML=`<span class="letter">${'ABCD'[k]}</span><span id="r${k}"></span>`;});}
+function renderMedia(p){
+const mz=document.getElementById('mediaZone');mz.innerHTML='';mz.style.display='none';
+const grid=document.querySelector('.grid');grid.style.display='';
+fase='pregunta';
+const tipo=p.tipo||'texto';
+if(tipo==='audio'&&p.audio){
+mz.style.display='block';
+mz.innerHTML=`<div class="audRow"><button onclick="playAudio()">▶ Escuchar (G)</button><audio id="aud" controls preload="auto" src="${p.audio}"></audio></div><div class="mediaErr" id="mediaErr"></div>`;
+const a=document.getElementById('aud');a.onerror=()=>mediaError(p.audio);
+}else if(tipo==='videos'&&p.videos){
+document.querySelectorAll('.opt').forEach((el,k)=>{
+const src=(p.videos||[])[k]||'';
+const label=(p.respuestas||[])[k]||('Video '+'ABCD'[k]);
+el.innerHTML=`<span class="letter">${'ABCD'[k]}</span><span class="vwrap">${src?`<video src="${src}" muted loop playsinline autoplay preload="auto"></video>`:''}<small>${label}</small></span>`;
+const vv=el.querySelector('video');
+if(vv){vv.onerror=()=>{el.querySelector('.vwrap').innerHTML=`⚠ falta <b>${src}</b>`;};const pr=vv.play();if(pr&&pr.catch)pr.catch(()=>{});}
+});
+}else if((tipo==='video-pregunta'||tipo==='videopregunta')&&p.video){
+fase='video';
+mz.style.display='block';
+mz.innerHTML=`<video id="vmain" class="vmain" src="${p.video}" controls preload="auto"></video><div><button class="faseBtn" onclick="avanzarFase()">Mostrar pregunta (G)</button></div><div class="mediaErr" id="mediaErr"></div>`;
+const vm=document.getElementById('vmain');vm.onerror=()=>mediaError(p.video);
+grid.style.display='none';
+}
+}
+function mediaError(path){const e=document.getElementById('mediaErr');if(e)e.textContent=`⚠ No se encontró "${path}". Copia el archivo a la carpeta media/ junto a overlay.html`;}
+function playAudio(){const a=document.getElementById('aud');if(a)a.play().catch(()=>{});if(document.activeElement)document.activeElement.blur();}
+function avanzarFase(){fase='pregunta';document.getElementById('mediaZone').style.display='none';document.querySelector('.grid').style.display='';const v=document.getElementById('verdict');v.textContent='Elige con A/B/C/D y pulsa R';v.className='hint';if(document.activeElement)document.activeElement.blur();}
+function teclaG(){const p=preguntaActual();if(!p)return;const t=p.tipo||'texto';if(t==='audio')playAudio();else if(t==='video-pregunta'||t==='videopregunta'){if(fase==='video')avanzarFase();}if(document.activeElement)document.activeElement.blur();}
+function esFaseVideo(){const p=preguntaActual();if(!p)return false;const t=p.tipo||'texto';return (t==='video-pregunta'||t==='videopregunta')&&fase==='video';}
+document.addEventListener('keydown',e=>{
+if(e.target && (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable))return;
+if(finalAbierto&&(e.key==='Enter'||e.code==='Space')){e.preventDefault();startReto();return;}
+const k=e.key.toLowerCase();
+const isSpace=e.code==='Space'||e.key===' '||e.key==='Spacebar';
+if(isSpace){e.preventDefault();siguiente();}
+else if(e.key==='Enter'){e.preventDefault();siguiente();}
+else if(k==='a'||k==='1')marcar(0);
+else if(k==='b'||k==='2')marcar(1);
+else if(k==='c'||k==='3')marcar(2);
+else if(k==='d'||k==='4')marcar(3);
+else if(k==='5')premio(0);
+else if(k==='6')premio(1);
+else if(k==='7')premio(2);
+else if(k==='8')premio(3);
+else if(k==='r')revelar();
+else if(k==='x')usar50();
+else if(k==='p')usarPista();
+else if(k==='l')usarLlamada();
+else if(k==='n')usarCambio();
+else if(k==='g')teclaG();
+else if(k==='m')toggleModo();
+else if(k==='t')reiniciarTodo();
+else if(k==='h')toggleObs();
+else if(e.key==='ArrowRight')siguiente();
+else if(e.key==='ArrowLeft')anterior();
+});
+render();renderComodines();pintaPts();
+</script>
+</body>
+</html>

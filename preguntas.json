@@ -1,0 +1,20 @@
+[
+  {"categoria": "videojuegos", "pregunta": "¿Cómo se llama el protagonista de The Legend of Zelda?", "respuestas": ["Zelda", "Link", "Ganon", "Epona"], "correcta": 1},
+  {"categoria": "videojuegos", "pregunta": "¿Qué empresa creó a Mario Bros?", "respuestas": ["Nintendo", "Sega", "Sony", "Atari"], "correcta": 0},
+  {"categoria": "videojuegos", "pregunta": "¿En qué año se lanzó oficialmente Minecraft?", "respuestas": ["2009", "2011", "2013", "2015"], "correcta": 1},
+  {"categoria": "pelis", "pregunta": "¿Qué película ganó el Óscar a mejor película en 1994?", "respuestas": ["Pulp Fiction", "Forrest Gump", "El Rey León", "Cadena perpetua"], "correcta": 1},
+  {"categoria": "pelis", "pregunta": "¿Quién interpreta al Capitán Jack Sparrow?", "respuestas": ["Johnny Depp", "Brad Pitt", "Tom Cruise", "Keanu Reeves"], "correcta": 0},
+  {"categoria": "pelis", "pregunta": "¿De qué saga es la frase 'Que la Fuerza te acompañe'?", "respuestas": ["Star Wars", "Star Trek", "Dune", "Avatar"], "correcta": 0},
+  {"categoria": "historia", "pregunta": "¿En qué año llegó el hombre a la Luna?", "respuestas": ["1965", "1969", "1972", "1959"], "correcta": 1},
+  {"categoria": "historia", "pregunta": "¿En qué año cayó el Muro de Berlín?", "respuestas": ["1989", "1991", "1985", "1979"], "correcta": 0},
+  {"categoria": "historia", "pregunta": "¿Qué civilización construyó Machu Picchu?", "respuestas": ["Inca", "Azteca", "Maya", "Egipcia"], "correcta": 0},
+  {"categoria": "deportes", "pregunta": "¿Cada cuántos años se juega el Mundial de fútbol?", "respuestas": ["2", "3", "4", "5"], "correcta": 2},
+  {"categoria": "deportes", "pregunta": "¿En qué deporte se juega con un puck?", "respuestas": ["Hockey", "Béisbol", "Golf", "Rugby"], "correcta": 0},
+  {"categoria": "deportes", "pregunta": "¿Cuántos jugadores por equipo hay en cancha en básquet?", "respuestas": ["5", "6", "7", "11"], "correcta": 0},
+  {"categoria": "ciencia", "pregunta": "¿Cuál es el planeta más grande del sistema solar?", "respuestas": ["Saturno", "Tierra", "Júpiter", "Neptuno"], "correcta": 2},
+  {"categoria": "ciencia", "pregunta": "¿Cuál es el símbolo químico del oro?", "respuestas": ["Au", "Ag", "O", "G"], "correcta": 0},
+  {"categoria": "ciencia", "pregunta": "¿Qué gas absorben las plantas para la fotosíntesis?", "respuestas": ["Oxígeno", "Dióxido de carbono", "Hidrógeno", "Nitrógeno"], "correcta": 1},
+  {"categoria": "cultura", "pregunta": "¿Cuál es el río más largo del mundo?", "respuestas": ["Amazonas", "Nilo", "Misisipi", "Yangtsé"], "correcta": 0},
+  {"categoria": "cultura", "pregunta": "¿Cuál es la capital de Australia?", "respuestas": ["Sídney", "Melbourne", "Camberra", "Perth"], "correcta": 2},
+  {"categoria": "cultura", "pregunta": "¿Qué grupo canta 'Bohemian Rhapsody'?", "respuestas": ["The Beatles", "Queen", "Pink Floyd", "ABBA"], "correcta": 1}
+]

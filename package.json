@@ -1,0 +1,9 @@
+{
+  "name": "trivia-discord",
+  "version": "1.0.0",
+  "description": "Trivia para compartir pantalla en Discord",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

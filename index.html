@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trivia Discord</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Segoe UI,Arial,sans-serif}
+body{background:#1e1f22;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
+.top{width:100%;max-width:900px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;color:#b5bac1;font-size:14px}
+.card{width:100%;max-width:900px;background:#2b2d31;border-radius:16px;padding:32px;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.cat{display:inline-block;background:#5865f2;padding:4px 14px;border-radius:20px;font-size:14px;font-weight:700;margin-bottom:14px}
+.q{font-size:clamp(24px,4vw,38px);font-weight:800;margin-bottom:24px;line-height:1.25}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.grid{grid-template-columns:1fr}}
+.opt{display:flex;align-items:center;gap:12px;background:#35373c;border:3px solid transparent;border-radius:12px;padding:18px;font-size:20px;font-weight:600;cursor:default;transition:.2s}
+.letter{width:40px;height:40px;flex-shrink:0;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:#fff}
+.a .letter{background:#5865f2}.b .letter{background:#57a25c}.c .letter{background:#c98a2b}.d .letter{background:#c84a4a}
+.opt.correct{border-color:#3ba55d;background:#2d7d46;box-shadow:0 0 20px rgba(59,165,93,.6)}
+.opt.dim{opacity:.35}
+.timerwrap{height:10px;background:#35373c;border-radius:6px;margin:20px 0 0;overflow:hidden}
+#timerbar{height:100%;width:100%;background:#5865f2;transition:width 1s linear}
+.controls{width:100%;max-width:900px;display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;justify-content:center}
+button{background:#5865f2;color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:15px;font-weight:600;cursor:pointer}
+button.ghost{background:#35373c}
+button:hover{filter:brightness(1.15)}
+.hint{margin-top:12px;color:#949ba4;font-size:13px;text-align:center}
+body.clean .controls,body.clean .hint,body.clean .top .right{display:none}
+#editor{width:100%;max-width:900px;margin-top:16px;background:#2b2d31;border-radius:12px;padding:16px;display:none}
+#editor textarea{width:100%;height:90px;background:#1e1f22;color:#fff;border:1px solid #444;border-radius:8px;padding:8px}
+body.clean #editor{display:none!important}
+</style>
+</head>
+<body>
+<div class="top"><span id="counter">Pregunta 1 / 1</span><span class="right">Comparte esta ventana en Discord: Compartir pantalla → Ventana</span></div>
+<div class="card">
+<div class="cat" id="cat">Trivia</div>
+<div class="q" id="q">Cargando...</div>
+<div class="grid">
+<div class="opt a"><span class="letter">A</span><span id="r0"></span></div>
+<div class="opt b"><span class="letter">B</span><span id="r1"></span></div>
+<div class="opt c"><span class="letter">C</span><span id="r2"></span></div>
+<div class="opt d"><span class="letter">D</span><span id="r3"></span></div>
+</div>
+<div class="timerwrap"><div id="timerbar"></div></div>
+</div>
+<div class="controls" id="controls">
+<button onclick="revelar()">Revelar (R)</button>
+<button onclick="siguiente()" style="background:#3ba55d">Siguiente (Espacio)</button>
+<button class="ghost" onclick="anterior()">← Anterior</button>
+<button class="ghost" onclick="toggleTimer()">Timer 20s (T)</button>
+<button class="ghost" onclick="mezclar()">Mezclar</button>
+<button class="ghost" onclick="document.body.classList.toggle('clean')">Modo limpio (H)</button>
+<button class="ghost" onclick="document.documentElement.requestFullscreen()">Pantalla completa (F)</button>
+<button class="ghost" onclick="toggleEditor()">+ Pregunta</button>
+</div>
+<div class="hint">Atajos: Espacio = siguiente · R = revelar · T = timer · H = ocultar controles para stream · F = pantalla completa · Edita <b>preguntas.json</b> para tus preguntas</div>
+<div id="editor">
+<b>Añadir pregunta rápida:</b><br><br>
+<input id="nq" placeholder="Pregunta" style="width:100%;padding:8px;border-radius:8px;border:1px solid #444;background:#1e1f22;color:#fff;margin-bottom:8px">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+<input id="n0" placeholder="Respuesta A" style="padding:8px;border-radius:8px;border:1px solid #444;background:#1e1f22;color:#fff">
+<input id="n1" placeholder="Respuesta B" style="padding:8px;border-radius:8px;border:1px solid #444;background:#1e1f22;color:#fff">
+<input id="n2" placeholder="Respuesta C" style="padding:8px;border-radius:8px;border:1px solid #444;background:#1e1f22;color:#fff">
+<input id="n3" placeholder="Respuesta D" style="padding:8px;border-radius:8px;border:1px solid #444;background:#1e1f22;color:#fff">
+</div>
+Correcta: <select id="nc" style="padding:6px;border-radius:6px"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select>
+<button onclick="addQ()">Añadir</button>
+</div>
+<script>
+let preguntas = [
+{categoria:"Videojuegos",pregunta:"¿Cuál es el nombre del protagonista de The Legend of Zelda?",respuestas:["Zelda","Link","Ganon","Epona"],correcta:1},
+{categoria:"Cine",pregunta:"¿Qué película ganó el Óscar a mejor película en 1994?",respuestas:["Pulp Fiction","Forrest Gump","El Rey León","Cadena perpetua"],correcta:1},
+{categoria:"Ciencia",pregunta:"¿Cuál es el planeta más grande del sistema solar?",respuestas:["Saturno","Tierra","Júpiter","Neptuno"],correcta:2},
+{categoria:"Historia",pregunta:"¿En qué año llegó el hombre a la Luna?",respuestas:["1965","1969","1972","1959"],correcta:1},
+{categoria:"Geografía",pregunta:"¿Cuál es el río más largo del mundo?",respuestas:["Amazonas","Nilo","Misisipi","Yangtsé"],correcta:0},
+{categoria:"Música",pregunta:"¿Qué grupo canta 'Bohemian Rhapsody'?",respuestas:["The Beatles","Queen","Pink Floyd","ABBA"],correcta:1}
+];
+// Intenta cargar preguntas.json si se abre vía http:// (node server.js)
+fetch('preguntas.json').then(r=>r.ok?r.json():null).then(j=>{if(j&&j.length){preguntas=j; i=0; render();}}).catch(()=>{});
+let i=0, revelado=false, timerInt=null, t=20;
+function render(){
+  revelado=false;
+  const p=preguntas[i];
+  document.getElementById('cat').textContent=(p.categoria||'Trivia');
+  document.getElementById('q').textContent=p.pregunta;
+  document.getElementById('counter').textContent=`Pregunta ${i+1} / ${preguntas.length}`;
+  document.querySelectorAll('.opt').forEach((el,k)=>{
+    el.classList.remove('correct','dim');
+    document.getElementById('r'+k).textContent=p.respuestas[k]||'';
+  });
+  stopTimer();
+}
+function revelar(){
+  revelado=true;
+  const p=preguntas[i];
+  document.querySelectorAll('.opt').forEach((el,k)=>{
+    el.classList.toggle('correct',k===p.correcta);
+    el.classList.toggle('dim',k!==p.correcta);
+  });
+  stopTimer();
+}
+function siguiente(){i=(i+1)%preguntas.length;render();}
+function anterior(){i=(i-1+preguntas.length)%preguntas.length;render();}
+function mezclar(){preguntas.sort(()=>Math.random()-.5);i=0;render();}
+function toggleEditor(){const e=document.getElementById('editor');e.style.display=e.style.display==='block'?'none':'block';}
+function addQ(){
+  const q=document.getElementById('nq').value.trim();
+  const r=[0,1,2,3].map(k=>document.getElementById('n'+k).value.trim()||('Opción '+(k+1)));
+  if(!q){alert('Escribe la pregunta');return;}
+  preguntas.push({categoria:'Custom',pregunta:q,respuestas:r,correcta:+document.getElementById('nc').value});
+  i=preguntas.length-1;render();toggleEditor();
+}
+function toggleTimer(){
+  if(timerInt){stopTimer();return;}
+  t=20;const bar=document.getElementById('timerbar');
+  bar.style.width='100%';bar.style.background='#5865f2';
+  timerInt=setInterval(()=>{
+    t--;bar.style.width=(t/20*100)+'%';
+    if(t<=5)bar.style.background='#c84a4a';
+    if(t<=0){stopTimer();revelar();}
+  },1000);
+}
+function stopTimer(){if(timerInt){clearInterval(timerInt);timerInt=null;}document.getElementById('timerbar').style.width='100%';}
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+  if(e.code==='Space'){e.preventDefault();revelar()?siguiente():siguiente();}
+  else if(e.key==='r'||e.key==='R')revelar();
+  else if(e.key==='t'||e.key==='T')toggleTimer();
+  else if(e.key==='h'||e.key==='H')document.body.classList.toggle('clean');
+  else if(e.key==='f'||e.key==='F')document.documentElement.requestFullscreen();
+  else if(e.key==='ArrowRight')siguiente();
+  else if(e.key==='ArrowLeft')anterior();
+});
+render();
+</script>
+</body>
+</html>
