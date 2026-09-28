@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Trivia Overlay - OBS</title>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Segoe UI,Arial,sans-serif}
 html,body{background:transparent!important;width:100%;height:100%;overflow:hidden}
@@ -63,6 +64,8 @@ body.reto #retoBar{display:flex}
 #count{color:#b5bac1;font-size:12px;margin-top:4px}
 body.obs #ctr,body.obs #count,body.obs #comodBox,body.obs .manual{display:none}
 body.obs #comodStatus{display:block}
+#salaBadge{position:fixed;right:10px;bottom:8px;background:rgba(30,31,34,.92);color:#ffca28;border-radius:8px;padding:4px 10px;font-size:13px;font-weight:800;z-index:15}
+body.obs #salaBadge{display:none}
 #call{display:none;position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#141519;border:2px solid #57a25c;border-radius:12px;padding:10px 20px;color:#fff;font-size:20px;font-weight:800;z-index:10}
 #call button{margin-left:12px;background:#c84a4a;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:14px;font-weight:700;cursor:pointer}
 #final{display:none;position:fixed;inset:0;background:rgba(15,16,18,.96);z-index:20;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
@@ -74,6 +77,7 @@ body.obs #comodStatus{display:block}
 </style>
 </head>
 <body>
+<div id="salaBadge"></div>
 <div id="call">📞 Llamada <span id="calltime">0:40</span><button onclick="colgar()">Colgar</button></div>
 <div id="final"><h1 id="finalT"></h1><p id="finalP"></p><div><button onclick="startReto()">↺ Jugar de nuevo</button><button class="ghost" onclick="setModo('libre')">Modo libre</button></div></div>
 <div id="topbar">
@@ -452,7 +456,21 @@ else if(k==='h')toggleObs();
 else if(e.key==='ArrowRight')siguiente();
 else if(e.key==='ArrowLeft')anterior();
 });
-render();renderComodines();pintaPts();
+// ---------- Control remoto por internet (celular -> overlay vía canal MQTT) ----------
+// El overlay y el celular usan el mismo código de sala (?sala=XXXX o el mostrado abajo).
+let SALA='';
+function initNube(){
+try{
+if(typeof mqtt==='undefined')return;
+SALA=new URLSearchParams(location.search).get('sala')||localStorage.getItem('triviaSala')||'';
+if(!SALA){const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789';SALA='';for(let k=0;k<4;k++)SALA+=A[Math.floor(Math.random()*A.length)];try{localStorage.setItem('triviaSala',SALA);}catch(_){}}
+const sb=document.getElementById('salaBadge');if(sb)sb.textContent='📡 Sala '+SALA;
+const cli=mqtt.connect('wss://broker.emqx.io:8084/mqtt',{connectTimeout:8000});
+cli.on('connect',()=>{cli.subscribe('trivia/'+SALA+'/cmd');});
+cli.on('message',(t,buf)=>{try{const m=JSON.parse(buf.toString());remoteCmd(m.cmd,m.arg);}catch(_){}});
+}catch(_){}
+}
+render();renderComodines();pintaPts();initNube();
 </script>
 </body>
 </html>

@@ -4,11 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Control Trivia 📱</title>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Segoe UI,Arial,sans-serif;-webkit-tap-highlight-color:transparent}
 body{background:#1e1f22;color:#fff;min-height:100vh;padding:14px;max-width:520px;margin:0 auto}
 h1{font-size:20px;text-align:center;margin-bottom:4px}
-#st{text-align:center;font-size:13px;color:#949ba4;margin-bottom:12px}
+#st{text-align:center;font-size:13px;color:#949ba4;margin-bottom:8px}
+#salaRow{display:flex;gap:8px;margin-bottom:12px}
+#salaRow input{flex:1;background:#2b2d31;color:#fff;border:1px solid #555;border-radius:10px;padding:12px;font-size:17px;font-weight:800;text-transform:uppercase;text-align:center;letter-spacing:3px}
+#salaRow button{background:#5865f2;color:#fff;border:none;border-radius:10px;padding:12px 16px;font-size:15px;font-weight:800;cursor:pointer}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
 button{border:none;border-radius:12px;padding:18px 8px;font-size:18px;font-weight:800;color:#fff;background:#35373c;cursor:pointer;touch-action:manipulation}
@@ -23,7 +27,8 @@ button:active{filter:brightness(1.4)}
 </head>
 <body>
 <h1>🎮 Control Trivia</h1>
-<div id="st">conectando…</div>
+<div id="st">escribe el código de sala del overlay</div>
+<div id="salaRow"><input id="sala" maxlength="8" placeholder="XXXX"><button onclick="conectar()">Conectar</button></div>
 <div class="sec">Respuestas</div>
 <div class="grid4">
 <button class="a" onclick="cmd('marcar',0)">A</button>
@@ -57,14 +62,32 @@ button:active{filter:brightness(1.4)}
 <button class="red" onclick="cmd('reiniciar')">↺ Reiniciar todo</button>
 </div>
 <script>
+let cli=null, sala='';
+function st(t){document.getElementById('st').textContent=t;}
+function conectar(){
+sala=(document.getElementById('sala').value||'').trim().toUpperCase();
+if(!sala){st('escribe el código de sala primero');return;}
+try{localStorage.setItem('triviaSala',sala);}catch(_){}
+if(cli)cli.end();
+st('conectando a sala '+sala+'…');
+cli=mqtt.connect('wss://broker.emqx.io:8084/mqtt',{connectTimeout:8000});
+cli.on('connect',()=>st('✅ conectado a sala '+sala));
+cli.on('reconnect',()=>st('🔄 reconectando…'));
+cli.on('offline',()=>st('❌ sin conexión'));
+cli.on('error',()=>st('❌ error de conexión'));
+}
 function cmd(c,a){
-fetch('/api/cmd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd:c,arg:a})})
-.then(r=>{document.getElementById('st').textContent=r.ok?'✅ enviado '+new Date().toLocaleTimeString():'❌ error';})
-.catch(()=>{document.getElementById('st').textContent='❌ sin conexión al PC';});
+if(!cli||!cli.connected){st('conéctate a la sala primero');return;}
+cli.publish('trivia/'+sala+'/cmd',JSON.stringify({cmd:c,arg:a}));
+st('✅ enviado '+new Date().toLocaleTimeString());
 if(navigator.vibrate)navigator.vibrate(20);
 }
-// Chequea conexión al cargar
-fetch('/api/stream',{method:'HEAD'}).then(()=>{document.getElementById('st').textContent='✅ conectado al PC';}).catch(()=>{});
+(function(){
+const q=new URLSearchParams(location.search).get('sala');
+let s=(q||'').toUpperCase();
+if(!s){try{s=localStorage.getItem('triviaSala')||'';}catch(_){}}
+if(s){document.getElementById('sala').value=s;conectar();}
+})();
 </script>
 </body>
 </html>
